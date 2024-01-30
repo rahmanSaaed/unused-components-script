@@ -28,35 +28,52 @@ function getAngularComponents(directory: string): string[] {
   return componentFiles;
 }
 
-function findUsedComponents(componentFiles: string[]): string[] {
-  const usedComponents: string[] = [];
+function isComponentUsedInRoutes(componentFile: string): boolean {
+  try {
+    const content = fs.readFileSync(componentFile, 'utf-8');
 
-  componentFiles.forEach((filePath) => {
-    try {
-      const content = fs.readFileSync(filePath, 'utf-8');
-
-      const matches = content.match(/selector: ['"`]\s*app-(.*?)['"`]/);
-      if (matches) {
-        const componentName = matches[1];
-        usedComponents.push(componentName);
-      }
-    } catch (error) {
-      console.error(`Error reading file: ${filePath}`);
-      console.error(error);
-    }
-  });
-
-  return usedComponents;
+    // Check if the component is mentioned in the routes
+    return content.includes('RouterModule.forChild([');
+  } catch (error) {
+    console.error(`Error reading file: ${componentFile}`);
+    console.error(error);
+    return false;
+  }
 }
 
-function findUnusedComponents(allComponents: string[], usedComponents: string[]): string[] {
-  return allComponents.filter((component) => !usedComponents.includes(component));
+function isComponentUsedInHTML(componentFile: string, selector: string): boolean {
+  try {
+    const content = fs.readFileSync(componentFile, 'utf-8');
+
+    // Check if the component selector is used in HTML
+    return content.includes(`</${selector}>`) || content.includes(`'${selector}'`) || content.includes(`"${selector}"`);
+  } catch (error) {
+    console.error(`Error reading file: ${componentFile}`);
+    console.error(error);
+    return false;
+  }
 }
 
 function main() {
   const angularComponents = getAngularComponents(projectRoot);
-  const usedComponents = findUsedComponents(angularComponents);
-  const unusedComponents = findUnusedComponents(angularComponents, usedComponents);
+  const unusedComponents: string[] = [];
+  const usedComponents: string[] = [];
+
+  angularComponents.forEach((componentFile) => {
+    const componentName = path.basename(componentFile, '.component.ts');
+    
+    // Check if the component is used in routes
+    const isUsedInRoutes = isComponentUsedInRoutes(componentFile);
+
+    // Check if the component selector is used in HTML
+    const isUsedInHTML = isComponentUsedInHTML(componentFile, componentName);
+
+    if (isUsedInRoutes || isUsedInHTML) {
+      usedComponents.push(componentName);
+    } else {
+      unusedComponents.push(componentName);
+    }
+  });
 
   console.log('Used Components:', usedComponents);
   console.log('Unused Components:', unusedComponents);
