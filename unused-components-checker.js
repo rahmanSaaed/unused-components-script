@@ -1,12 +1,10 @@
-// unused-components-checker.ts
+const fs = require('fs');
+const path = require('path');
 
-import * as fs from 'fs';
-import * as path from 'path';
+const projectRoot = process.cwd(); // Replace with your actual project path
 
-const projectRoot = './'; // Replace with your actual project path
-
-function getAngularComponents(directory: string): string[] {
-  const componentFiles: string[] = [];
+function getAngularComponents(directory) {
+  const componentFiles = [];
   try {
     const files = fs.readdirSync(directory, { withFileTypes: true });
 
@@ -28,7 +26,7 @@ function getAngularComponents(directory: string): string[] {
   return componentFiles;
 }
 
-function isComponentUsedInRoutes(componentFile: string): boolean {
+function isComponentUsedInRoutes(componentFile) {
   try {
     const content = fs.readFileSync(componentFile, 'utf-8');
 
@@ -41,12 +39,16 @@ function isComponentUsedInRoutes(componentFile: string): boolean {
   }
 }
 
-function isComponentUsedInHTML(componentFile: string, selector: string): boolean {
+function isComponentUsedInHTML(componentFile, selector) {
   try {
     const content = fs.readFileSync(componentFile, 'utf-8');
 
     // Check if the component selector is used in HTML
-    return content.includes(`</${selector}>`) || content.includes(`'${selector}'`) || content.includes(`"${selector}"`);
+    return (
+      content.includes(`</${selector}>`) ||
+      content.includes(`'${selector}'`) ||
+      content.includes(`"${selector}"`)
+    );
   } catch (error) {
     console.error(`Error reading file: ${componentFile}`);
     console.error(error);
@@ -55,13 +57,14 @@ function isComponentUsedInHTML(componentFile: string, selector: string): boolean
 }
 
 function main() {
+  console.log('projectRoot', projectRoot);
   const angularComponents = getAngularComponents(projectRoot);
-  const unusedComponents: string[] = [];
-  const usedComponents: string[] = [];
+  const unusedComponents = [];
+  const usedComponents = [];
 
   angularComponents.forEach((componentFile) => {
     const componentName = path.basename(componentFile, '.component.ts');
-    
+
     // Check if the component is used in routes
     const isUsedInRoutes = isComponentUsedInRoutes(componentFile);
 

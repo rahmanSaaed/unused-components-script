@@ -1,16 +1,17 @@
+
 {
-  "name": "unused-component",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "unused-components-checker",
+  "version": "1.0.6",
+  "description": "A tool to check for unused Angular components",
+  "main": "unused-components-checker.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node unused-components-checker.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "fs": "0.0.1-security",
+    "path": "^0.12.7"
+  },
+  "bin": {
+    "unused-components-checker": "./unused-components-checker.js"
   }
 }
