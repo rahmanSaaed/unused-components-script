@@ -37,6 +37,6 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.1.3",
-    "unused-components-checker": "^1.0.6"
+    "unused-components-checker": "1.0.7"
   }
 }
