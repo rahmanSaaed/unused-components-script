@@ -1,12 +1,19 @@
 {
   "name": "unused-components-checker",
-  "version": "1.0.7",
+  "version": "1.0.9",
   "description": "A tool to check for unused Angular components",
   "main": "unused-components-checker.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["angular", "components", "unused"],
+  "keywords": [
+    "angular",
+    "components",
+    "unused"
+  ],
   "author": "Abdulrahman Saaed",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "ts-morph": "^21.0.1"
+  }
 }

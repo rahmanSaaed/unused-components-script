@@ -1,85 +1,121 @@
 const fs = require('fs');
 const path = require('path');
+const ts = require('typescript');
 
-const projectRoot = process.cwd(); // Replace with your actual project path
+const projectRoot = process.cwd();
+// console.log("projectRoot", projectRoot);
 
-function getAngularComponents(directory) {
-  const componentFiles = [];
+function getAngularComponents(projectRootFolder) {
+  const componentFiles = getAllComponentsFiles(projectRootFolder, '.component.ts');
+  const components = [];
+
+  componentFiles.forEach((file) => {
+    // console.log("selectorMatch file", file);
+
+    try {
+      const content = fs.readFileSync(file, 'utf-8');
+      const selectorMatch = content.match(/selector\s*:\s*['"`]([^'"`]*)['"`]/);
+      const componentClasse = content.match(/\bclass\s+([^\s]+)\s*(?=\S)/);
+
+      // console.log("classMatch", classMatch ? classMatch[1] : null);
+      
+      // console.log("classMatch", classMatch);
+
+      if (selectorMatch && selectorMatch[1]) {
+        components.push({
+          file,
+          selector: selectorMatch[1],
+          componentClass: componentClasse ? componentClasse[1] : null
+        });
+      }
+    } catch (error) {
+      console.error(`Error reading file: ${file}`);
+      console.error(error);
+    }
+  });
+  console.log("components", components)
+  return components;
+}
+
+
+function getAllComponentsFiles(projectRootFolder, extension) {
+  const files = [];
+  // console.log("files", files);
+
   try {
-    const files = fs.readdirSync(directory, { withFileTypes: true });
-
-    files.forEach((file) => {
-      const filePath = path.join(directory, file.name);
-
-      if (file.isDirectory()) {
-        // Recursively get component files in subdirectories
-        componentFiles.push(...getAngularComponents(filePath));
-      } else if (file.isFile() && file.name.endsWith('.component.ts')) {
-        componentFiles.push(filePath);
+    const brojecItems = fs.readdirSync(projectRootFolder, { withFileTypes: true });
+    // console.log("brojecItems list", brojecItems);
+    brojecItems.forEach((item) => {
+      const fullPath = path.join(projectRootFolder, item?.name);
+      if (item.isDirectory()) {
+        if (item.name !== 'node_modules') {
+          files.push(...getAllComponentsFiles(fullPath, extension));
+        }
+      } else if (item.isFile() && item.name.endsWith(extension)) {
+        files.push(fullPath);
       }
     });
   } catch (error) {
-    console.error(`Error reading directory: ${directory}`);
+    console.error(`Error reading directory: ${projectRootFolder}`);
     console.error(error);
   }
 
-  return componentFiles;
+  return files;
 }
 
-function isComponentUsedInRoutes(componentFile) {
-  try {
-    const content = fs.readFileSync(componentFile, 'utf-8');
 
-    // Check if the component is mentioned in the routes
-    return content.includes('RouterModule.forChild([');
-  } catch (error) {
-    console.error(`Error reading file: ${componentFile}`);
-    console.error(error);
-    return false;
+
+function isSelectorUsedInApp(projectRootFolder, selector) {
+  const tsFiles = getAllComponentsFiles(projectRootFolder, '.ts');
+  const htmlFiles = getAllComponentsFiles(projectRootFolder, '.html');
+
+  for (const tsFile of tsFiles) {
+    try {
+      const content = fs.readFileSync(tsFile, 'utf-8');
+      if (content.includes(`</${selector}>`)) {
+        return true;
+      }
+    } catch (error) {
+      console.error(`Error reading file: ${tsFile}`);
+      console.error(error);
+    }
   }
-}
 
-function isComponentUsedInHTML(componentFile, selector) {
-  try {
-    const content = fs.readFileSync(componentFile, 'utf-8');
-
-    // Check if the component selector is used in HTML
-    return (
-      content.includes(`</${selector}>`) ||
-      content.includes(`'${selector}'`) ||
-      content.includes(`"${selector}"`)
-    );
-  } catch (error) {
-    console.error(`Error reading file: ${componentFile}`);
-    console.error(error);
-    return false;
+  for (const htmlFile of htmlFiles) {
+    try {
+      const content = fs.readFileSync(htmlFile, 'utf-8');
+      if (content.includes(`</${selector}>`)) {
+        return true;
+      }
+    } catch (error) {
+      console.error(`Error reading file: ${htmlFile}`);
+      console.error(error);
+    }
   }
+
+  return false;
 }
 
 function main() {
-  console.log('projectRoot', projectRoot);
   const angularComponents = getAngularComponents(projectRoot);
   const unusedComponents = [];
-  const usedComponents = [];
+// console.log("getAngularComponents", angularComponents);
+  // angularComponents.forEach(({ file, selector }) => {
+  //   const isUsed = isSelectorUsedInApp(projectRoot, selector);
 
-  angularComponents.forEach((componentFile) => {
-    const componentName = path.basename(componentFile, '.component.ts');
+  //   if (!isUsed) {
+  //     unusedComponents.push({ file, selector });
+  //   }
+  // });
 
-    // Check if the component is used in routes
-    const isUsedInRoutes = isComponentUsedInRoutes(componentFile);
-
-    // Check if the component selector is used in HTML
-    const isUsedInHTML = isComponentUsedInHTML(componentFile, componentName);
-
-    if (isUsedInRoutes || isUsedInHTML) {
-      usedComponents.push(componentName);
-    } else {
-      unusedComponents.push(componentName);
-    }
-  });
-
-  console.log('Used Components:', usedComponents);
-  console.log('Unused Components:', unusedComponents);
+  // if (unusedComponents.length > 0) {
+  //   console.log('Unused Components:');
+  //   unusedComponents.forEach(({ file, selector }) => {
+  //     console.log(`Component: ${file}, Selector: ${selector}`);
+  //   });
+  // } else {
+  //   console.log('No unused components found.');
+  // }
 }
 
 main();
